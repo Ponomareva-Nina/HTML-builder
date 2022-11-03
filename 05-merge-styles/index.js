@@ -24,9 +24,7 @@ async function createBundle(dir) {
 }
 
 function clearBundle(bundle) {
-  fs.unlink(bundle, (err) => {
-    if (err) return console.log(`Failed to clear bundle! Error: ${err.message}`);
-  });
+  fs.unlink(bundle, () => {});
 }
 
 createBundle(dirToBundle);
