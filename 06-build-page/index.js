@@ -33,10 +33,30 @@ async function copyAssets(fromDir, toDir) {
   });
 }
 
+async function bundleStyles(fromDir, toDir) {
+  const files = await fs.promises.readdir(fromDir);
+  fs.unlink(path.join(toDir, 'style.css'), () => {});
+  const output = fs.createWriteStream(path.join(toDir, 'style.css'));
+
+  files.forEach(file => {
+    if (file.split('.')[1] === 'css') {
+      const input = fs.createReadStream(path.join(fromDir, file));
+      pipeline(
+        input,
+        output,
+        err => {
+          if (err) return console.log(`Failed! Error: ${err.message}`);
+        }
+      );
+    }
+  });
+}
+
 async function createBundle() {
   const distPath = path.join(__dirname, 'project-dist');
   await fs.promises.mkdir(distPath, {recursive: true});
-  await copyAssets(path.join(__dirname, 'assets'), distPath);
+  copyAssets(path.join(__dirname, 'assets'), distPath);
+  bundleStyles(path.join(__dirname, 'styles'), distPath);
 }
 
 createBundle();
