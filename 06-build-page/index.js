@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream');
 
-
 function clearDir(dir) {
   fs.readdir(dir, (err, files) => {
     if (err) throw err;
@@ -52,11 +51,31 @@ async function bundleStyles(fromDir, toDir) {
   });
 }
 
-async function createBundle() {
+async function createLayout(componentsDir, toDir) {
+  let htmlPage = '';
+  const readTemplate = fs.createReadStream(path.join(__dirname, 'template.html'),'utf-8');
+  const components = await fs.promises.readdir(componentsDir);
+
+  readTemplate.on('data', data => htmlPage += data);
+  readTemplate.on('end', () => {
+    components.forEach(component => {
+      const readComponent = fs.createReadStream(path.join(componentsDir, component), 'utf-8');
+      let componentContent = '';
+      readComponent.on('data', chunk => componentContent += chunk);
+      readComponent.on('end', () => {
+        htmlPage = htmlPage.replace(`{{${component.split('.')[0]}}}`, componentContent);
+        fs.createWriteStream(path.join(toDir, 'index.html')).write(htmlPage);
+      });
+    });
+  });
+}
+
+async function buildPage() {
   const distPath = path.join(__dirname, 'project-dist');
   await fs.promises.mkdir(distPath, {recursive: true});
   copyAssets(path.join(__dirname, 'assets'), distPath);
   bundleStyles(path.join(__dirname, 'styles'), distPath);
+  createLayout(path.join(__dirname, 'components'), distPath);
 }
 
-createBundle();
+buildPage();
