@@ -1,20 +1,34 @@
 const fs = require('fs');
 const path = require('path');
+const { copyFile } = require('node:fs/promises');
+
+const checkPath = async (folder) => {
+  let hasPath = false;
+  fs.access(folder, async (error) => {
+    if (!error) hasPath = true;
+  });
+  return hasPath;
+};
 
 async function copyAssets(fromDir, toDir) {
-  const folders = await fs.promises.readdir(fromDir);
-  await fs.promises.rm(path.join(toDir, 'assets'), { recursive: true, force: true });
-  await fs.promises.mkdir(path.join(toDir, 'assets'), {recursive: true});
+  try {
+    const folders = await fs.promises.readdir(fromDir);
+    if(checkPath(toDir)) {
+      await fs.promises.rm(path.join(toDir), {recursive: true, force: true});
+    }
+    await fs.promises.mkdir(path.join(toDir), {recursive: true});
 
-  folders.forEach(async (folder) => {
-    await fs.promises.mkdir(path.join(toDir, 'assets', folder), {recursive: true});
-    const files = await fs.promises.readdir(path.join(fromDir, folder));
-    files.forEach(file => {
-      const input = fs.createReadStream(path.join(fromDir, folder, file));
-      const output = fs.createWriteStream(path.join(toDir, 'assets', folder, file));
-      input.pipe(output);
+    folders.forEach(async (folder) => {
+      await fs.promises.mkdir(path.join(toDir, folder), {recursive: true});
+      const files = await fs.promises.readdir(path.join(fromDir, folder));
+
+      files.forEach(file => {
+        copyFile(path.join(fromDir, folder, file), path.join(toDir, folder, file));
+      });
     });
-  });
+  } catch(error) {
+    if (error) console.log(`Failed to copy assets! Error: ${error.message}`);
+  }
 }
 
 async function bundleStyles(fromDir, toDir) {
@@ -54,7 +68,7 @@ async function createLayout(componentsDir, toDir) {
 async function buildPage() {
   const distPath = path.join(__dirname, 'project-dist');
   await fs.promises.mkdir(distPath, {recursive: true});
-  copyAssets(path.join(__dirname, 'assets'), distPath);
+  copyAssets(path.join(__dirname, 'assets'), path.join(distPath, 'assets'));
   bundleStyles(path.join(__dirname, 'styles'), distPath);
   createLayout(path.join(__dirname, 'components'), distPath);
 }
