@@ -3,7 +3,7 @@ const path = require('path');
 const { copyFile } = require('node:fs/promises');
 const dir = path.join(__dirname, 'files');
 
-async function copyDir(src, err) {
+async function copyDir(src) {
   try {
     await fs.promises.mkdir(path.join(__dirname, 'files-copy'), {recursive: true});
     clearDir(path.join(__dirname, 'files-copy'));
@@ -13,14 +13,14 @@ async function copyDir(src, err) {
       copyFile(path.join(src, file), path.join(__dirname, 'files-copy', file));
     });
     console.log('Congrats! Directory copied successfully');
-  } catch {
+  } catch(err) {
     if (err) return console.log(`Failed! Error: ${err.message}`);
   }
 }
 
 function clearDir(dir) {
   fs.readdir(dir, (err, files) => {
-    if (err) throw err;
+    if (err) console.log(err.message);
     files.forEach(file => {
       fs.unlink(path.join(dir, file), () => {
       });
