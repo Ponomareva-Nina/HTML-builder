@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { pipeline } = require('stream');
 const dirToBundle = path.join(__dirname, 'styles');
 
 async function createBundle(dir) {
@@ -12,13 +11,7 @@ async function createBundle(dir) {
   files.forEach(file => {
     if (file.split('.')[1] === 'css') {
       const input = fs.createReadStream(path.join(dir, file));
-      pipeline(
-        input,
-        output,
-        err => {
-          if (err) return console.log(`Failed! Error: ${err.message}`);
-        }
-      );
+      input.pipe(output);
     }
   });
 }

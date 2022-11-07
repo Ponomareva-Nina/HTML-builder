@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { pipeline } = require('stream');
 
 async function copyAssets(fromDir, toDir) {
   const folders = await fs.promises.readdir(fromDir);
@@ -11,13 +10,9 @@ async function copyAssets(fromDir, toDir) {
     await fs.promises.mkdir(path.join(toDir, 'assets', folder), {recursive: true});
     const files = await fs.promises.readdir(path.join(fromDir, folder));
     files.forEach(file => {
-      pipeline(
-        fs.createReadStream(path.join(fromDir, folder, file)),
-        fs.createWriteStream(path.join(toDir, 'assets', folder, file)),
-        err => {
-          if (err) return console.log(`Something went wrong! Error: ${err.message}`);
-        }
-      );
+      const input = fs.createReadStream(path.join(fromDir, folder, file));
+      const output = fs.createWriteStream(path.join(toDir, 'assets', folder, file));
+      input.pipe(output);
     });
   });
 }
@@ -30,13 +25,7 @@ async function bundleStyles(fromDir, toDir) {
   files.forEach(file => {
     if (file.split('.')[1] === 'css') {
       const input = fs.createReadStream(path.join(fromDir, file));
-      pipeline(
-        input,
-        output,
-        err => {
-          if (err) console.log(`Failed! Error: ${err.message}`);
-        }
-      );
+      input.pipe(output);
     }
   });
 }
