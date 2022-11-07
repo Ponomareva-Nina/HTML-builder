@@ -2,22 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream');
 
-function clearDir(dir) {
-  fs.readdir(dir, (err, files) => {
-    if (err) throw err;
-    files.forEach(file => {
-      fs.unlink(path.join(dir, file), () => {
-      });
-    });
-  });
-}
-
 async function copyAssets(fromDir, toDir) {
   const folders = await fs.promises.readdir(fromDir);
+  await fs.promises.rm(path.join(toDir, 'assets'), { recursive: true, force: true });
   await fs.promises.mkdir(path.join(toDir, 'assets'), {recursive: true});
 
   folders.forEach(async (folder) => {
-    clearDir(path.join(toDir, 'assets', folder));
     await fs.promises.mkdir(path.join(toDir, 'assets', folder), {recursive: true});
     const files = await fs.promises.readdir(path.join(fromDir, folder));
     files.forEach(file => {
@@ -44,7 +34,7 @@ async function bundleStyles(fromDir, toDir) {
         input,
         output,
         err => {
-          if (err) return console.log(`Failed! Error: ${err.message}`);
+          if (err) console.log(`Failed! Error: ${err.message}`);
         }
       );
     }
@@ -59,13 +49,15 @@ async function createLayout(componentsDir, toDir) {
   readTemplate.on('data', data => htmlPage += data);
   readTemplate.on('end', () => {
     components.forEach(component => {
-      const readComponent = fs.createReadStream(path.join(componentsDir, component), 'utf-8');
-      let componentContent = '';
-      readComponent.on('data', chunk => componentContent += chunk);
-      readComponent.on('end', () => {
-        htmlPage = htmlPage.replace(`{{${component.split('.')[0]}}}`, componentContent);
-        fs.createWriteStream(path.join(toDir, 'index.html')).write(htmlPage);
-      });
+      if (component.split('.')[1] === 'html') {
+        const readComponent = fs.createReadStream(path.join(componentsDir, component), 'utf-8');
+        let componentContent = '';
+        readComponent.on('data', chunk => componentContent += chunk);
+        readComponent.on('end', () => {
+          htmlPage = htmlPage.replace(`{{${component.split('.')[0]}}}`, componentContent);
+          fs.createWriteStream(path.join(toDir, 'index.html')).write(htmlPage);
+        });
+      }
     });
   });
 }
