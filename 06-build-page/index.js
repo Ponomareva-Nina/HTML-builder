@@ -37,7 +37,7 @@ async function bundleStyles(fromDir, toDir) {
   const output = fs.createWriteStream(path.join(toDir, 'style.css'));
 
   files.reverse().forEach(file => {
-    if (file.split('.')[1] === 'css') {
+    if (path.extname(file) === '.css') {
       const input = fs.createReadStream(path.join(fromDir, file));
       input.pipe(output);
     }
@@ -52,7 +52,7 @@ async function createLayout(componentsDir, toDir) {
   readTemplate.on('data', data => htmlPage += data);
   readTemplate.on('end', () => {
     components.forEach(component => {
-      if (component.split('.')[1] === 'html') {
+      if (path.extname(component) === '.html') {
         const readComponent = fs.createReadStream(path.join(componentsDir, component), 'utf-8');
         let componentContent = '';
         readComponent.on('data', chunk => componentContent += chunk);

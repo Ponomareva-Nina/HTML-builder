@@ -5,7 +5,7 @@ const input = fs.createWriteStream(path.join(__dirname, 'text.txt'));
 
 stdout.write('Please write your text below \nor enter "exit" if you want to end session \n');
 stdin.on('data', data => {
-  if(data.toString().trim() === 'exit') {
+  if(data.toString().toLowerCase().trim() === 'exit') {
     stdout.write('Goodbye and have a nice day!');
     process.exit();
   } else {
